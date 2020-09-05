@@ -11,5 +11,5 @@ ownerid = '161019663684206593'  # put your id here
 
 # Channels
 
-welcomeChannelId = 726782870936486019
-suggestieChannelId = 725671223366778891
+welcomeChannelId = 751770026733862913
+suggestieChannelId = 751770087366721597

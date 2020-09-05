@@ -2,18 +2,15 @@ import json
 
 import discord
 
-import config
-from config import token, prefix, ownerid, welcomeChannelId, suggestieChannelId
+from config import token, prefix, welcomeChannelId, suggestieChannelId
 from discord.ext.commands import Bot, has_permissions
-import asyncio
 
-import sys, traceback
-
-from PIL import Image, ImageDraw, ImageFilter, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 
 client = Bot(prefix)
+
 
 # initial_extensions = ['commands.ip']
 #
@@ -53,7 +50,7 @@ def welcomeFunction(member):
     back_im.paste(im3, (750, 50), mask_im)
 
     draw = ImageDraw.Draw(back_im)
-    txt = "Welkom " + member + " op Nijkerk Roleplay!"
+    txt = "Welkom " + member + " op Public Square!"
     fontsize = 2  # starting font size
 
     # portion of image width you want text width to be
@@ -83,7 +80,7 @@ async def on_ready():
     print("Username: %s" % client.user.name)
     print("ID: %s" % client.user.id)
     print("----------------------")
-    await client.change_presence(activity=discord.Activity(name='at play.nijkerkroleplay.nl', type=0))
+    await client.change_presence(activity=discord.Activity(name='-- looking after a cool server --', type=0))
 
 
 @client.event
@@ -113,7 +110,6 @@ async def on_raw_reaction_add(payload):
         for r in msg.reactions:
             if r.emoji == "📩":
                 await r.remove(payload.member)
-
 
 
 @client.command(pass_context=True)
@@ -163,38 +159,6 @@ async def suggestie(ctx):
             await ctx.message.delete()
 
 
-@client.command(pass_context=True)
-async def ip(ctx):
-    if ctx.message.author == client.user:
-        return
-
-    await ctx.message.channel.send("""
-Je kan met onze stad verbinden op de volgende manieren:
-➤ In de serverlijst **Nijkerk** opzoeken
-➤ F8 ➤ connect **play.nijkerkroleplay.nl**
-    """)
-    await ctx.message.delete()
-
-
-# @client.command()
-# async def test(ctx, member: discord.Member = None):
-#     if ctx.message.author == client.user:
-#         return
-#
-#     if not member:
-#         member = ctx.message.author
-#
-#     response = requests.get(member.avatar_url)
-#     img1 = Image.open(BytesIO(response.content))
-#     img2 = img1.resize((500, 500), Image.ANTIALIAS)
-#     img2.save('profile.png', quality=95)
-#
-#     welcomeFunction(str(ctx.message.author), ctx)
-#
-#     channel = client.get_channel(welcomeChannelId)
-#     img = Image.open("output.png")
-#     await channel.send(file=discord.File('output.png'))
-
 @client.event
 async def on_member_join(member: discord.Member = None):
     response = requests.get(member.avatar_url)
@@ -208,10 +172,12 @@ async def on_member_join(member: discord.Member = None):
     img = Image.open("output.png")
     await channel.send(file=discord.File('output.png'))
 
+
 @client.command()
 @has_permissions(manage_messages=True)
 async def clear(ctx, amount=5):
     await ctx.channel.purge(limit=amount)
+
 
 @client.command(pass_context=True)
 async def setupTicketBot(ctx):
@@ -219,16 +185,16 @@ async def setupTicketBot(ctx):
         return
 
     embed = discord.Embed(colour=discord.Colour.blue())
+    embed.add_field(name='Public Square Support', value="Om een ticket aan te maken, typ !ticket <bericht>")
+
+    msg = await ctx.message.channel.send(embed=embed)
+
+    embed = discord.Embed(colour=discord.Colour.blue())
     # embed.set_author()
-    embed.add_field(name='Nijkerk Roleplay Support', value="Om een ticket aan te maken, klik op :envelope_with_arrow:")
+    embed.add_field(name='Public Square Support', value="Om een ticket aan te maken, klik op :envelope_with_arrow:")
 
     msg = await ctx.message.channel.send(embed=embed)
     await msg.add_reaction("📩")
-
-    embed = discord.Embed(colour=discord.Colour.blue())
-    embed.add_field(name='Nijkerk Roleplay Support', value="Om een ticket aan te maken, typ !ticket <bericht>")
-
-    msg = await ctx.message.channel.send(embed=embed)
     await ctx.message.delete()
 
 
@@ -248,7 +214,7 @@ async def helpTicket(ctx):
 
     if ctx.author.guild_permissions.administrator or valid_user:
 
-        em = discord.Embed(title="Nijkerk Ticket Bot Help", description="", color=discord.Colour.blue())
+        em = discord.Embed(title="Public Square Ticket Bot Help", description="", color=discord.Colour.blue())
         em.add_field(name="`!ticket <bericht>`",
                      value="Dit maakt een nieuw ticket.")
         em.add_field(name="`!sluit`",
@@ -286,15 +252,13 @@ async def ticket(ctx, *, args=None):
     with open("data.json") as f:
         data = json.load(f)
 
-
     canCreateTicket = True
     ticketName2 = "ticket-{}".format(ctx.author.name)
     for ticketName in data["ticket-channel-names"]:
         if ticketName == ticketName2:
             canCreateTicket = False
 
-
-    if canCreateTicket == True:
+    if canCreateTicket:
         ticket_number = int(data["ticket-counter"])
         ticket_number += 1
 
@@ -322,7 +286,6 @@ async def ticket(ctx, *, args=None):
         non_mentionable_roles = []
 
         if data["pinged-roles"] != []:
-
             for role_id in data["pinged-roles"]:
                 role = ctx.guild.get_role(role_id)
 
@@ -350,8 +313,7 @@ async def ticket(ctx, *, args=None):
     await ctx.message.delete()
 
 
-
-@client.event # Ticket met command
+@client.event  # Ticket met command
 async def on_message(message):
     if (str(message.content).startswith("!createTicket")):
 
@@ -360,12 +322,10 @@ async def on_message(message):
 
         await client.wait_until_ready()
 
-        argArray = message.content.replace('!createTicket ','')
+        argArray = message.content.replace('!createTicket ', '')
         member = client.get_user(int(argArray))
 
-
         message_content = "Wij zullen zo snel mogelijk bij u zijn."
-
 
         with open("data.json") as f:
             data = json.load(f)
@@ -376,13 +336,13 @@ async def on_message(message):
             if ticketName2 == ticketName:
                 canCreateTicket = False
 
-
         if canCreateTicket == True:
             ticket_number = int(data["ticket-counter"])
             ticket_number += 1
 
             ticket_channel = await message.guild.create_text_channel("ticket-{}".format(member.name))
-            await ticket_channel.set_permissions(message.guild.get_role(message.guild.id), send_messages=False, read_messages=False)
+            await ticket_channel.set_permissions(message.guild.get_role(message.guild.id), send_messages=False,
+                                                 read_messages=False)
 
             for role_id in data["valid-roles"]:
                 role = message.guild.get_role(role_id)
@@ -432,6 +392,7 @@ async def on_message(message):
 
         await message.delete()
     await client.process_commands(message)
+
 
 @client.command()
 async def sluit(ctx):
@@ -697,9 +658,6 @@ async def claim(ctx, role_id=None):
             await ctx.send("Dit ticket is nu geclaimd door " + ctx.author.name)
     else:
         await ctx.message.delete()
-
-
-
 
 
 @client.event
